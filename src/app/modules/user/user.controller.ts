@@ -3,10 +3,8 @@
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from 'http-status-codes';
 import { userServices } from "./user.service";
-import AppError from "../../errorHelpers/AppError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-
 
 const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const user = await userServices.createUser(req.body);
@@ -14,6 +12,20 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
         success: true,
         statusCode: httpStatus.CREATED,
         message: "User created successfully",
+        data: user
+    })
+});
+
+
+const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const verifiedToken = req.user;
+    const payload = req.body;
+    const user = await userServices.updateUser(userId as string, payload, verifiedToken);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "User Updated successfully",
         data: user
     })
 });
@@ -31,5 +43,6 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
 
 export const usersController = {
     createUser,
-    getAllUsers
+    getAllUsers,
+    updateUser
 }
