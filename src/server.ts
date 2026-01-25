@@ -3,6 +3,7 @@ import { Server } from "http";
 import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
+import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -26,4 +27,9 @@ const startServer = async () => {
 
 }
 
-startServer();
+(async () => {
+    await startServer();
+    await seedSuperAdmin();
+})()
+
+
