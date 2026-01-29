@@ -1,38 +1,37 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/AppError";
-import { type IUser } from "../user/user.interface"
 import { User } from "../user/user.model";
 import httpStatus from "http-status-codes";
 import bcryptjs from "bcryptjs";
-import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/userTokens";
+import { createNewAccessTokenWithRefreshToken } from "../../utils/userTokens";
 import type { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 
 
-const credentialsLogin = async (payload: Partial<IUser>) => {
-    const { email, password } = payload;
-    if (!email) {
-        throw new Error("Email is required");
-    }
-    const isUserExist = await User.findOne({ email });
+// const credentialsLogin = async (payload: Partial<IUser>) => {
+//     const { email, password } = payload;
+//     if (!email) {
+//         throw new Error("Email is required");
+//     }
+//     const isUserExist = await User.findOne({ email });
 
-    if (!isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Email deos not exist");
-    }
-    const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string);
-    if (!isPasswordMatched) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Incorrect password");
-    }
-    const userTokens = createUserTokens(isUserExist);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: pass, ...rest } = isUserExist.toObject();
+//     if (!isUserExist) {
+//         throw new AppError(httpStatus.BAD_REQUEST, "Email deos not exist");
+//     }
+//     const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string);
+//     if (!isPasswordMatched) {
+//         throw new AppError(httpStatus.BAD_REQUEST, "Incorrect password");
+//     }
+//     const userTokens = createUserTokens(isUserExist);
+//     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//     const { password: pass, ...rest } = isUserExist.toObject();
 
-    return {
-        accessToken: userTokens.accessToken,
-        refreshToken: userTokens.refreshToken,
-        user: rest,
-    }
-}
+//     return {
+//         accessToken: userTokens.accessToken,
+//         refreshToken: userTokens.refreshToken,
+//         user: rest,
+//     }
+// }
 
 const getNewAccessToken = async (refreshToken: string) => {
 
@@ -53,7 +52,6 @@ const getResetPassword = async (oldPassword: string, newPassword: string, decode
 }
 
 export const authServices = {
-    credentialsLogin,
     getNewAccessToken,
     getResetPassword
 }

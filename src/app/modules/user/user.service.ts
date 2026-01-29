@@ -11,11 +11,12 @@ const createUser = async (payload: Partial<IUser>) => {
     if (!email) {
         throw new Error("Email is required");
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const isUserExist = await User.findOne({ email });
 
-    if (isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User already exist");
-    }
+    // if (isUserExist) {
+    //     throw new AppError(httpStatus.BAD_REQUEST, "User already exist");
+    // }
     const hashedPassword = await bcryptjs.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND));
 
     const authProvider: IAuthProvider = { provider: "credentials", providerId: email }

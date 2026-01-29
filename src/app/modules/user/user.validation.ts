@@ -1,10 +1,10 @@
-import z from "zod";
+import * as z from "zod";
 import { isActive, Role } from "./user.interface";
 
 export const createUserZodSchema = z.object({
     name: z
         .string({
-            error: "Name must be string"
+            error: (iss) => (iss.input === undefined ? "Name is required" : "Invalid name"),
         })
         .min(2, { error: "Name too short: minimum 2 characters long" })
         .max(50, { error: "Name too long" }),
