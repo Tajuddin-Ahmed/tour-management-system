@@ -9,10 +9,9 @@ import { Booking } from "./booking.model";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
 import type { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { Tour } from "../tour/tour.model";
+import { getTransactionId } from "../../utils/getTransactionId";
 
-const getTransactionId = () => {
-    return `tran_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-}
+
 
 /**
  * Duplicate DB Collections / replica

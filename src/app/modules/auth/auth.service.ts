@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import AppError from "../../errorHelpers/AppError";
 import { User } from "../user/user.model";
@@ -6,6 +7,9 @@ import bcryptjs from "bcryptjs";
 import { createNewAccessTokenWithRefreshToken } from "../../utils/userTokens";
 import type { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
+import { isActive, type IAuthProvider } from "../user/user.interface";
+import jwt from "jsonwebtoken";
+import { sendEmail } from "../../utils/sendEmail";
 
 
 // const credentialsLogin = async (payload: Partial<IUser>) => {
@@ -41,7 +45,20 @@ const getNewAccessToken = async (refreshToken: string) => {
     }
 }
 
-const getResetPassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
+const resetPassword = async (payload: Record<string, any>, decodedToken: JwtPayload) => {
+    if (payload.id != decodedToken.userId) {
+        throw new AppError(401, "You cannot reset your password");
+    }
+    const isUserExist = await User.findById(decodedToken.userId);
+    if (!isUserExist) {
+        throw new AppError(401, "User does not exist");
+    }
+
+    const hashedPassword = await bcryptjs.hash(payload.newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+    isUserExist.password = hashedPassword;
+    await isUserExist.save();
+}
+const changePassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
     const user = await User.findById(decodedToken.userId);
     const isOldPasswordMatched = await bcryptjs.compare(oldPassword, user!.password as string);
     if (!isOldPasswordMatched) {
@@ -50,8 +67,73 @@ const getResetPassword = async (oldPassword: string, newPassword: string, decode
     user!.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
     user!.save();
 }
+const setPassword = async (userId: string, plainPassword: string) => {
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new AppError(404, "User not found");
+    }
+
+    if (user.password && user.auths.some(providerObject => providerObject.provider === "google")) {
+        throw new AppError(httpStatus.BAD_REQUEST,
+            "You have already set your password.Now you can change your password from your profile");
+    }
+
+    const hashedPassword = await bcryptjs.hash(plainPassword, Number(envVars.BCRYPT_SALT_ROUND));
+
+    const credentialsProvider: IAuthProvider = {
+        provider: "credentials",
+        providerId: user.email
+    }
+
+    const auths: IAuthProvider[] = [...user.auths, credentialsProvider];
+    user.password = hashedPassword;
+    user.auths = auths;
+    user.save();
+
+}
+
+const forgotPassword = async (email: string) => {
+
+    const isUserExist = await User.findOne({ email });
+    if (!isUserExist) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User deos not exist");
+    }
+    if (!isUserExist.isVerified) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+    }
+    if (isUserExist.isActive === isActive.BLOCKED || isUserExist.isActive === isActive.INACTIVE) {
+        throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`);
+    }
+    if (isUserExist.isDeleted) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
+    }
+
+    const jwtPayload = {
+        userId: isUserExist._id,
+        email: isUserExist.email,
+        role: isUserExist.role
+    }
+
+    const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, { expiresIn: "10m" });
+    const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
+    sendEmail({
+        to: isUserExist.email,
+        subject: "Password Reset",
+        templateName: "forgotPassword",
+        templateData: {
+            name: isUserExist.name,
+            resetUILink
+        }
+    })
+
+}
 
 export const authServices = {
     getNewAccessToken,
-    getResetPassword
+    resetPassword,
+    changePassword,
+    setPassword,
+    forgotPassword
 }
