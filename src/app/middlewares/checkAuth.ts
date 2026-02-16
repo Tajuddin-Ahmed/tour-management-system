@@ -20,12 +20,16 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
         if (!isUserExist) {
             throw new AppError(httpStatus.BAD_REQUEST, "User deos not exist");
         }
+        if (!isUserExist.isVerified) {
+            throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+        }
         if (isUserExist.isActive === isActive.BLOCKED || isUserExist.isActive === isActive.INACTIVE) {
             throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`);
         }
         if (isUserExist.isDeleted) {
             throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
         }
+
         if (!authRoles.includes(decodedToken.role)) {
             throw new AppError(403, "You are not permitted to view this Route");
         }

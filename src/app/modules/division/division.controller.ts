@@ -3,9 +3,15 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 import { DivisionServices } from "./division.service";
+import type { IDivision } from "./division.interface";
+
 
 const createDivision = catchAsync(async (req: Request, res: Response) => {
-    const result = await DivisionServices.createDivision(req.body);
+    const payload: IDivision = {
+        ...req.body,
+        thumbnail: req.file?.path
+    }
+    const result = await DivisionServices.createDivision(payload);
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
@@ -26,7 +32,8 @@ const getSingleDivision = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllDivisions = catchAsync(async (req: Request, res: Response) => {
-    const result = await DivisionServices.getAllDivisions();
+    const query = req.query;
+    const result = await DivisionServices.getAllDivisions(query as Record<string, string>);
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.OK,
@@ -40,7 +47,11 @@ const getAllDivisions = catchAsync(async (req: Request, res: Response) => {
 const updateDivision = catchAsync(async (req: Request, res: Response) => {
 
     const id = req.params.id;
-    const result = await DivisionServices.updateDivision(id as string, req.body);
+    const payload: IDivision = {
+        ...req.body,
+        thumbnail: req.file?.path
+    }
+    const result = await DivisionServices.updateDivision(id as string, payload);
 
     sendResponse(res, {
         success: true,
