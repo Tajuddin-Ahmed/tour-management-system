@@ -1,9 +1,0 @@
-import httpStatusCode from "http-status-codes";
-const notFound = (req, res) => {
-    res.status(httpStatusCode.NOT_FOUND).json({
-        success: false,
-        message: "Route Not Found"
-    });
-};
-export default notFound;
-//# sourceMappingURL=notFound.js.map
